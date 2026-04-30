@@ -90,7 +90,6 @@ for i in $(seq 0 $((num_vehicles - 1))); do
         HEADLESS=1
         PX4_SIM_MODEL=${vehicle}
         PX4_GZ_WORLD=${world}
-        PX4_GZ_MODEL_NAME=${vehicle}_${i}
         ${FIRMWARE_DIR}/build/bin/px4
         -i ${i}
     )

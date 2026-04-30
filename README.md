@@ -88,3 +88,25 @@ Build arguments can be added to the above command line as follows:
 ```
 docker build https://github.com/JonasVautherin/px4-gazebo-headless.git#master --build-arg HOME_LAT=37.873350 --build-arg HOME_LON=-122.302525 --build-arg HOME_ALT=20 -t px4-gazebo-headless
 ```
+
+### Multi-drone usage support:
+Build the derived image
+
+```
+docker build -f Dockerfile.multi -t px4-gazebo-headless:multi .
+```
+
+Single drone
+
+```
+docker run --rm -it \
+  -p 14540-14542:14540-14542/udp \
+  -p 14550-14552:14550-14552/udp \
+  px4-gazebo-headless:multi -n 3 192.168.1.100
+```
+
+Three drones, separate QGC and API hosts
+
+```
+docker run --rm -it px4-gazebo-headless:multi -n 3 192.168.1.200 192.168.1.100
+```
