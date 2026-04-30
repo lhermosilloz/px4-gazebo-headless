@@ -1,0 +1,24 @@
+# Derived image that adds multi-vehicle support to the published single-vehicle
+# image. No PX4 recompilation — only the entrypoint script is replaced.
+#
+# Build:
+#   docker build -f Dockerfile.multi -t px4-gazebo-headless:multi .
+#
+# Run (single vehicle, backward-compatible):
+#   docker run --rm -it px4-gazebo-headless:multi 192.168.1.100
+#
+# Run (three vehicles):
+#   docker run --rm -it px4-gazebo-headless:multi -n 3 192.168.1.100
+#
+# Exposed MAVLink UDP ports per instance:
+#   Instance i — API: 14540+i   QGC: 14550+i
+#
+# Expose the ports you need with -p flags, e.g. for 3 drones:
+#   -p 14540-14542:14540-14542/udp -p 14550-14552:14550-14552/udp
+
+FROM jonasvautherin/px4-gazebo-headless:1.16.2
+
+COPY entrypoint.sh /root/entrypoint.sh
+RUN chmod +x /root/entrypoint.sh
+
+ENTRYPOINT ["/root/entrypoint.sh"]
