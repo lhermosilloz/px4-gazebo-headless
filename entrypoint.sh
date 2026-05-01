@@ -2,7 +2,7 @@
 
 function show_help {
     echo ""
-    echo "Usage: ${0} [-h | -n COUNT | -v VEHICLE | -w WORLD] [HOST_API | HOST_QGC HOST_API]"
+    echo "Usage: ${0} [-h | -n COUNT | -s SPACING | -v VEHICLE | -w WORLD] [HOST_API | HOST_QGC HOST_API]"
     echo ""
     echo "Run a headless px4-gazebo simulation in a docker container. The"
     echo "available vehicles and worlds are the ones available in PX4"
@@ -10,6 +10,7 @@ function show_help {
     echo ""
     echo "  -h         Show this help"
     echo "  -n COUNT   Number of vehicles to spawn (default: 1)"
+    echo "  -s METRES  Spacing between vehicles along the Y axis (default: 2)"
     echo "  -v VEHICLE Set the vehicle (default: gz_x500)"
     echo "  -w WORLD   Set the world (default: default)"
     echo ""
@@ -41,14 +42,17 @@ OPTIND=1 # Reset in case getopts has been used previously in the shell.
 vehicle=gz_x500
 world=default
 num_vehicles=1
+spacing=2
 
-while getopts "h?n:v:w:" opt; do
+while getopts "h?n:s:v:w:" opt; do
     case "$opt" in
     h|\?)
         show_help
         exit 0
         ;;
     n)  num_vehicles=$OPTARG
+        ;;
+    s)  spacing=$OPTARG
         ;;
     v)  vehicle=$OPTARG
         ;;
@@ -83,24 +87,30 @@ trap 'kill $(jobs -p) 2>/dev/null; wait' EXIT INT TERM
 
 for i in $(seq 0 $((num_vehicles - 1))); do
     instance_dir="/tmp/px4_instance_${i}"
+    log_file="/tmp/px4_instance_${i}.log"
     mkdir -p "${instance_dir}"
 
-    cmd=(
-        env
-        HEADLESS=1
-        PX4_SIM_MODEL=${vehicle}
-        PX4_GZ_WORLD=${world}
-        ${FIRMWARE_DIR}/build/bin/px4
-        -i ${i}
-    )
+    # Space drones along the Y axis so they don't spawn on top of each other.
+    pose_y=$(( i * spacing ))
 
+    cmd=(env HEADLESS=1 PX4_SIM_MODEL=${vehicle} PX4_GZ_WORLD=${world} PX4_GZ_MODEL_POSE="0,${pose_y},0")
+
+    # Instances > 0 must not start their own Gazebo server — they attach to the
+    # one already started by instance 0.
+    [ "$i" -gt 0 ] && cmd+=(PX4_GZ_STANDALONE=1)
+
+    cmd+=(${FIRMWARE_DIR}/build/bin/px4 -i ${i})
+
+    # tee to per-instance log file; prefix stdout with [drone-N] for the
+    # combined docker logs view. stdbuf -oL forces line-buffered output so
+    # lines appear immediately in 'docker logs -f' even without a TTY.
     if [ "$i" -lt "$((num_vehicles - 1))" ]; then
-        (cd "${instance_dir}" && "${cmd[@]}") &
+        (cd "${instance_dir}" && "${cmd[@]}" 2>&1 | stdbuf -oL tee "${log_file}" | stdbuf -oL sed -u "s/^/[drone-${i}] /") &
         # Give instance 0 enough time to start the gz server before the next
         # instance tries to connect and spawn its model.
         sleep 5
     else
         # Last instance runs in the foreground to keep the container alive.
-        (cd "${instance_dir}" && "${cmd[@]}")
+        (cd "${instance_dir}" && "${cmd[@]}" 2>&1 | stdbuf -oL tee "${log_file}" | stdbuf -oL sed -u "s/^/[drone-${i}] /")
     fi
 done

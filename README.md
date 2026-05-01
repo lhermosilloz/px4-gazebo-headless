@@ -110,3 +110,15 @@ Three drones, separate QGC and API hosts
 ```
 docker run --rm -it px4-gazebo-headless:multi -n 3 192.168.1.200 192.168.1.100
 ```
+
+Stop container
+
+```
+docker stop px4sim
+```
+
+Run stop script
+
+```
+.\stop.ps1
+```
