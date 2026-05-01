@@ -105,12 +105,12 @@ for i in $(seq 0 $((num_vehicles - 1))); do
     # combined docker logs view. stdbuf -oL forces line-buffered output so
     # lines appear immediately in 'docker logs -f' even without a TTY.
     if [ "$i" -lt "$((num_vehicles - 1))" ]; then
-        (cd "${instance_dir}" && "${cmd[@]}" 2>&1 | stdbuf -oL tee "${log_file}" | stdbuf -oL sed -u "s/^/[drone-${i}] /") &
+        (cd "${instance_dir}" && "${cmd[@]}" 2>&1 | tr -d '\r' | stdbuf -oL tee "${log_file}" | stdbuf -oL sed -u "s/^/[drone-${i}] /") &
         # Give instance 0 enough time to start the gz server before the next
         # instance tries to connect and spawn its model.
         sleep 5
     else
         # Last instance runs in the foreground to keep the container alive.
-        (cd "${instance_dir}" && "${cmd[@]}" 2>&1 | stdbuf -oL tee "${log_file}" | stdbuf -oL sed -u "s/^/[drone-${i}] /")
+        (cd "${instance_dir}" && "${cmd[@]}" 2>&1 | tr -d '\r' | stdbuf -oL tee "${log_file}" | stdbuf -oL sed -u "s/^/[drone-${i}] /")
     fi
 done
