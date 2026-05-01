@@ -126,7 +126,7 @@ if errorlevel 1 (
 )
 echo [drone-$i] Log ready.  Press Ctrl+C to stop following.
 echo.
-docker exec -it $ContainerName tail -f $logFile
+docker exec $ContainerName tail -f $logFile
 "@ | Set-Content -Path $bat -Encoding ASCII
     $droneBats += $bat
 }
