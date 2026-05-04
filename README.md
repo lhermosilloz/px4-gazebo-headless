@@ -29,6 +29,18 @@ docker run --rm -it jonasvautherin/px4-gazebo-headless:1.16.2 192.168.0.12
 
 where `192.168.0.12` should be replaced by the IP listening on the API port 14540 (e.g. MAVSDK or MAVROS).
 
+```
+docker run --rm -it -p 8554:8554 jonasvautherin/px4-gazebo-headless:latest -v gz_x500_mono_cam
+```
+
+for launching with video
+
+```
+docker run --rm -it -p 8554:8554 jonasvautherin/px4-gazebo-headless:1.16.1 -v gz_x500_mono_cam 192.168.1.167
+```
+
+for launching with video and sending it to phone IP.
+
 ### Run with custom IP for both MAVLink interfaces
 
 This mode is useful for running both QGroundControl and the offboard app (e.g. using MAVSDK) on another device than the one running docker.
@@ -109,6 +121,12 @@ Three drones, separate QGC and API hosts
 
 ```
 docker run --rm -it px4-gazebo-headless:multi -n 3 192.168.1.200 192.168.1.100
+```
+
+Launch
+
+```
+.\launch.ps1 -N 3 -IP 192.168.1.31
 ```
 
 Stop container
