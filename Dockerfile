@@ -58,6 +58,8 @@ RUN cmake --build ${SITL_RTSP_PROXY}/build
 RUN cmake -DCONFIG=px4_sitl_default -B${FIRMWARE_DIR}/build -S${FIRMWARE_DIR} && \
     cmake --build ${FIRMWARE_DIR}/build
 
+COPY worlds/ ${FIRMWARE_DIR}/Tools/simulation/gz/worlds/
+
 COPY edit_rcS.bash ${WORKSPACE_DIR}
 COPY entrypoint.sh /root/entrypoint.sh
 RUN chmod +x /root/entrypoint.sh

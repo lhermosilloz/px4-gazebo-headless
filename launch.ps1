@@ -28,7 +28,11 @@
     Metres between drones along the Y axis (default: 2)
 
 .PARAMETER World
-    Gazebo world (default: default)
+    Gazebo world name (default: default). Ignored if -WorldFile is supplied.
+
+.PARAMETER WorldFile
+    Path to a custom .sdf world file on the host. Mounts it into the container
+    and sets the world name from the filename automatically.
 
 .PARAMETER Image
     Docker image to use (default: px4-gazebo-headless:multi)
@@ -50,6 +54,7 @@ param(
     [string] $IPQGC         = "",
     [string] $Vehicle       = "gz_x500",
     [string] $World         = "default",
+    [string] $WorldFile     = "",
     [int]    $Spacing       = 2,
     [string] $Image         = "px4-gazebo-headless:multi",
     [string] $ContainerName = "px4sim"
@@ -70,12 +75,23 @@ if (-not (docker info 2>$null)) {
 
 docker rm -f $ContainerName 2>$null | Out-Null
 
+# ── Resolve world name and optional volume mount ──────────────────────────────
+
+$volumeMount = ""
+if ($WorldFile -ne "") {
+    $resolvedFile = Resolve-Path $WorldFile -ErrorAction Stop
+    $worldName    = [System.IO.Path]::GetFileNameWithoutExtension($resolvedFile)
+    $World        = $worldName
+    $containerPath = "/root/px4/Tools/simulation/gz/worlds/${worldName}.sdf"
+    $volumeMount  = "--volume `"${resolvedFile}:${containerPath}`""
+}
+
 # ── Build the docker run command (detached — no -it) ─────────────────────────
 # Running detached means Docker buffers output line-by-line, so 'docker logs -f'
 # shows clean complete lines instead of characters racing from multiple processes.
 
 $ipArgs = if ($IPQGC -ne "") { "$IPQGC $IP" } else { $IP }
-$dockerRunArgs = "run --rm -d --name $ContainerName $Image -n $N -s $Spacing -v $Vehicle -w $World $ipArgs"
+$dockerRunArgs = "run --rm -d --name $ContainerName $volumeMount $Image -n $N -s $Spacing -v $Vehicle -w $World $ipArgs"
 
 # ── Write temp .bat files ─────────────────────────────────────────────────────
 # cmd /k inline strings don't support 'goto', so each pane gets a real .bat file.
