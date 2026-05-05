@@ -146,3 +146,9 @@ Run stop script
 ```
 .\stop.ps1
 ```
+
+# Build your own image (this takes a while — it compiles PX4 from source)
+docker build -t px4-gazebo-headless-custom .
+
+# Then run your image instead
+docker run --rm -it -p 8554:8554 px4-gazebo-headless-custom -v gz_x500_mono_cam 192.168.1.167
