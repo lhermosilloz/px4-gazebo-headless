@@ -152,3 +152,6 @@ docker build -t px4-gazebo-headless-custom .
 
 # Then run your image instead
 docker run --rm -it -p 8554:8554 px4-gazebo-headless-custom -v gz_x500_mono_cam 192.168.1.167
+
+# Launch for gimbal with camera and in fast loaded world:
+.\launch.ps1 -IP 192.168.1.167 -Image px4-gazebo-headless:multi -Vehicle gz_x500_gimbal -WorldFile .\worlds\city.sdf

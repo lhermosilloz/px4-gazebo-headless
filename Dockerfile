@@ -62,6 +62,7 @@ COPY worlds/ ${FIRMWARE_DIR}/Tools/simulation/gz/worlds/
 
 COPY edit_rcS.bash ${WORKSPACE_DIR}
 COPY entrypoint.sh /root/entrypoint.sh
-RUN chmod +x /root/entrypoint.sh
+RUN sed -i 's/\r//' ${WORKSPACE_DIR}/edit_rcS.bash /root/entrypoint.sh && \
+    chmod +x /root/entrypoint.sh
 
 ENTRYPOINT ["/root/entrypoint.sh"]

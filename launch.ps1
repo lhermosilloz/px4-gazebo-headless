@@ -91,7 +91,7 @@ if ($WorldFile -ne "") {
 # shows clean complete lines instead of characters racing from multiple processes.
 
 $ipArgs = if ($IPQGC -ne "") { "$IPQGC $IP" } else { $IP }
-$dockerRunArgs = "run --rm -d --name $ContainerName $volumeMount $Image -n $N -s $Spacing -v $Vehicle -w $World $ipArgs"
+$dockerRunArgs = "run --rm -d --name $ContainerName -p 8554:8554 $volumeMount $Image -n $N -s $Spacing -v $Vehicle -w $World $ipArgs"
 
 # ── Write temp .bat files ─────────────────────────────────────────────────────
 # cmd /k inline strings don't support 'goto', so each pane gets a real .bat file.
