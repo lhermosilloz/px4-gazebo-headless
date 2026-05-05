@@ -41,6 +41,12 @@ docker run --rm -it -p 8554:8554 jonasvautherin/px4-gazebo-headless:1.16.1 -v gz
 
 for launching with video and sending it to phone IP.
 
+```
+docker run --rm -it -p 8554:8554 jonasvautherin/px4-gazebo-headless:1.16.1 -v gz_x500_gimbal 192.168.1.167
+```
+
+for launching with a gimbal
+
 ### Run with custom IP for both MAVLink interfaces
 
 This mode is useful for running both QGroundControl and the offboard app (e.g. using MAVSDK) on another device than the one running docker.
