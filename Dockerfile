@@ -48,8 +48,8 @@ RUN git clone https://github.com/PX4/PX4-Autopilot.git ${FIRMWARE_DIR}
 RUN git -C ${FIRMWARE_DIR} checkout main
 RUN git -C ${FIRMWARE_DIR} submodule update --init --recursive
 
-COPY fix-cmake-build.patch ${FIRMWARE_DIR}
-RUN git -C ${FIRMWARE_DIR} apply fix-cmake-build.patch
+RUN sed -i 's/\t\tprebuild_targets # ensure all generated source files exist/\t\tmodules__uxrce_dds_client\n\t\tprebuild_targets # ensure all generated source files exist/' \
+    ${FIRMWARE_DIR}/src/lib/events/CMakeLists.txt
 
 COPY sitl_rtsp_proxy ${SITL_RTSP_PROXY}
 RUN cmake -B${SITL_RTSP_PROXY}/build -H${SITL_RTSP_PROXY}
