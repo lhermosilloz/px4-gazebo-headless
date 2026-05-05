@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <sdf version="1.9">
-  <world name="default">
+  <world name="city">
     <!-- Physics configuration -->
     <physics type="ode">
       <max_step_size>0.004</max_step_size>
