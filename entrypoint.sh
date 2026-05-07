@@ -44,7 +44,7 @@ world=default
 num_vehicles=1
 spacing=2
 
-while getopts "h?n:s:v:w:" opt; do
+while getopts "h?n:s:v:w:a:" opt; do
     case "$opt" in
     h|\?)
         show_help
@@ -58,12 +58,24 @@ while getopts "h?n:s:v:w:" opt; do
         ;;
     w)  world=$OPTARG
         ;;
+    a)  ATAK_IP=$(get_ip "$OPTARG")
+        ;;
     esac
 done
 
 shift $((OPTIND-1))
 
-if [ "$#" -eq 1 ]; then
+if [ -n "${ATAK_IP:-}" ]; then
+    if [ "$#" -eq 1 ]; then
+        RAW_API_IP=$(get_ip "$1")
+    elif [ "$#" -eq 0 ]; then
+        echo "ATAK mode (-a) requires an API host IP as a positional argument"
+        exit 1
+    else
+        show_help
+        exit 1
+    fi
+elif [ "$#" -eq 1 ]; then
     IP_QGC=$(get_ip "$1")
 elif [ "$#" -eq 2 ]; then
     IP_API=$(get_ip "$1")
@@ -80,7 +92,11 @@ ${SITL_RTSP_PROXY}/build/sitl_rtsp_proxy &
 # and $udp_offboard_port_local) are variables inside PX4's startup scripts and
 # are automatically offset by the instance ID, so this single patch covers all
 # instances correctly.
-source ${WORKSPACE_DIR}/edit_rcS.bash ${IP_API} ${IP_QGC} || exit 1
+if [ -n "${ATAK_IP:-}" ]; then
+    source ${WORKSPACE_DIR}/edit_rcS.bash ${ATAK_IP} ${RAW_API_IP} 14551 || exit 1
+else
+    source ${WORKSPACE_DIR}/edit_rcS.bash ${IP_API} ${IP_QGC} || exit 1
+fi
 
 # Kill all background PX4 children when the container stops.
 trap 'kill $(jobs -p) 2>/dev/null; wait' EXIT INT TERM

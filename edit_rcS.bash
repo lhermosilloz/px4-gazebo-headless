@@ -27,6 +27,8 @@ function get_host_ip {
     echo "$(ip route | awk '/default/ { print $3 }')"
 }
 
+GCS_REMOTE_PORT=""
+
 if [ "$#" -eq 1 ]; then
     if ! is_ip_valid $1; then exit 1; fi
     echo "14540 will be associated to $1"
@@ -37,7 +39,14 @@ elif [ "$#" -eq 2 ]; then
     echo "14540 will be associated to $2"
     QGC_PARAM="-t $1"
     API_PARAM="-t $2"
-elif [ "$#" -gt 2 ]; then
+elif [ "$#" -eq 3 ]; then
+    if ! is_ip_valid $1 || ! is_ip_valid $2; then exit 1; fi
+    echo "GCS will send to $1 on remote port $3"
+    echo "14540 will be associated to $2"
+    QGC_PARAM="-t $1"
+    API_PARAM="-t $2"
+    GCS_REMOTE_PORT=$3
+elif [ "$#" -gt 3 ]; then
     echo "Invalid parameters: [<IP for 14550> <IP for 14540>] | [<IP for 14540>]"
     exit 1;
 fi
@@ -51,6 +60,10 @@ else
     HOST=$(get_host_ip)
     QGC_PARAM=${QGC_PARAM:-"-t ${HOST}"}
     API_PARAM=${API_PARAM:-"-t ${HOST}"}
+fi
+
+if [ -n "$GCS_REMOTE_PORT" ]; then
+    QGC_PARAM="${QGC_PARAM} -o ${GCS_REMOTE_PORT}"
 fi
 
 CONFIG_FILE=${FIRMWARE_DIR}/build/etc/init.d-posix/px4-rc.mavlink

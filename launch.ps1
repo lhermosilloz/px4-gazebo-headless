@@ -40,11 +40,16 @@
 .PARAMETER ContainerName
     Docker container name (default: px4sim)
 
+.PARAMETER IPATAK
+    ATAK host IP. When set, all drones send GCS MAVLink to <IPATAK>:14551
+    (the fixed port the ATAK plugin listens on). Mutually exclusive with -IPQGC.
+
 .EXAMPLE
     .\launch.ps1 -IP 192.168.1.31
     .\launch.ps1 -N 3 -IP 192.168.1.31
     .\launch.ps1 -N 3 -IP 192.168.1.31 -Spacing 5
     .\launch.ps1 -N 2 -IP 192.168.1.31 -IPQGC 192.168.1.50
+    .\launch.ps1 -N 2 -IP 192.168.1.31 -IPATAK 192.168.1.100
 #>
 
 param(
@@ -52,6 +57,7 @@ param(
     [Parameter(Mandatory=$true)]
     [string] $IP,
     [string] $IPQGC         = "",
+    [string] $IPATAK        = "",
     [string] $Vehicle       = "gz_x500",
     [string] $World         = "default",
     [string] $WorldFile     = "",
@@ -61,6 +67,11 @@ param(
 )
 
 # ── Pre-flight checks ────────────────────────────────────────────────────────
+
+if ($IPATAK -ne "" -and $IPQGC -ne "") {
+    Write-Error "-IPATAK and -IPQGC are mutually exclusive. Use one or the other."
+    exit 1
+}
 
 if (-not (Get-Command wt.exe -ErrorAction SilentlyContinue)) {
     Write-Error "Windows Terminal (wt.exe) not found. Install it from the Microsoft Store."
@@ -90,7 +101,7 @@ if ($WorldFile -ne "") {
 # Running detached means Docker buffers output line-by-line, so 'docker logs -f'
 # shows clean complete lines instead of characters racing from multiple processes.
 
-$ipArgs = if ($IPQGC -ne "") { "$IPQGC $IP" } else { $IP }
+$ipArgs = if ($IPATAK -ne "") { "-a $IPATAK $IP" } elseif ($IPQGC -ne "") { "$IPQGC $IP" } else { $IP }
 $dockerRunArgs = "run --rm -d --name $ContainerName -p 8554:8554 $volumeMount $Image -n $N -s $Spacing -v $Vehicle -w $World $ipArgs"
 
 # ── Write temp .bat files ─────────────────────────────────────────────────────
@@ -179,7 +190,9 @@ Write-Host ""
 Write-Host "Launching $N drone(s)"
 Write-Host "  Image    : $Image"
 Write-Host "  API host : $IP  (UDP 14540 .. 14$( 540 + $N - 1 ))"
-if ($IPQGC -ne "") {
+if ($IPATAK -ne "") {
+    Write-Host "  ATAK host : $IPATAK  (UDP 14551 — all drones)"
+} elseif ($IPQGC -ne "") {
     Write-Host "  QGC host : $IPQGC  (UDP 14550 .. 14$( 550 + $N - 1 ))"
 }
 Write-Host ""
