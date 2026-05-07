@@ -155,3 +155,12 @@ docker run --rm -it -p 8554:8554 px4-gazebo-headless-custom -v gz_x500_mono_cam 
 
 # Launch for gimbal with camera and in fast loaded world:
 .\launch.ps1 -IP 192.168.1.167 -Image px4-gazebo-headless:multi -Vehicle gz_x500_gimbal -WorldFile .\worlds\city.sdf
+
+### Current workflow:
+.\launch.ps1 -IP 10.223.0.98 -Image px4-gazebo-headless:multi -Vehicle gz_x500_gimbal -WorldFile .\worlds\city.sdf
+
+gst-launch-1.0 rtspsrc location=rtsp://127.0.0.1:8554/live ! rtph264depay ! avdec_h264 ! videoconvert ! autovideosink
+
+docker run --rm -it --name mediamtx-android -e MTX_RTSPTRANSPORTS=tcp -p 0.0.0.0:8555:8554 bluenviron/mediamtx:1
+
+ffmpeg -rtsp_transport tcp -i rtsp://127.0.0.1:8554/live -c:v libx264 -profile:v baseline -level:v 3.1 -pix_fmt yuv420p -tune zerolatency -preset ultrafast -g 30 -bf 0 -an -f rtsp -rtsp_transport tcp rtsp://127.0.0.1:8555/android
